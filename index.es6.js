@@ -85,6 +85,7 @@ canny {sigma} {t1} {t2}       Детектирование границ с по�
                     up_bilinear: () => input.bilinearInterpolation(Number.parseFloat(args[3])),
                     up_bicubic: () => input.bicubicInterpolation(Number.parseFloat(args[3])),
                     downsample: () => input.bilinearInterpolation(1 / Number.parseFloat(args[3])),
+                    dcci: () => input.dcci(),
                     canny: () => {
                         const sigma = Number.parseFloat(args[3]);
                         const t1 = Number.parseFloat(args[4]);
