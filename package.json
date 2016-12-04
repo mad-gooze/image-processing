@@ -9,15 +9,15 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "babel-cli": "^6.16.0",
-    "babel-core": "^6.17.0",
+    "babel-cli": "^6.18.0",
+    "babel-core": "^6.18.2",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.18.0",
     "babel-preset-es2017": "^6.16.0"
   },
   "dependencies": {
-    "bmp-js": "^0.0.2",
-    "median-quickselect": "^1.0.0",
-    "mz": "^2.5.0",
-    "yargs": "^6.4.0"
+    "bmp-js": "^0.0.3",
+    "median-quickselect": "^1.0.1",
+    "mz": "^2.6.0",
+    "yargs": "^6.5.0"
   }
 }
