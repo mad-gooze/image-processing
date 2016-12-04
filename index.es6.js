@@ -24,6 +24,7 @@ up_bicubic {s}                Увеличение с помощью бикуб�
 downsample {s}                Уменьшение в s раз
 metric {mse|psnr|ssim|mssim}  Вычисление метрики между двумя входными изображениями, результат выводится числом на экран
 canny {sigma} {t1} {t2}       Детектирование границ с помощью алгоритма Канни. Первый параметр — сигма для вычисления частных производных, следующие два параметра - больший и меньший пороги соответственно
+dehighlight [img2] [img3] ... Алгоритм подавления бликов
 `;
 
 
@@ -90,6 +91,42 @@ canny {sigma} {t1} {t2}       Детектирование границ с по�
                         const t1 = Number.parseFloat(args[4]);
                         const t2 = Number.parseFloat(args[5]);
                         input.canny(sigma, t1, t2);
+                    },
+                    hough: () => input.hough(),
+                    dehighlight: () => {
+
+                        const hough = input.clone().hough();
+                        const maxDist = Math.hypot(input.width, input.height);
+                        const max = new Array(4);
+
+                        const findMax = () => {
+                            let maxIndex = 0;
+                            let maxVal = hough._data[maxIndex];
+                            for (let i = 1; i < hough._data.length; i++) {
+                                if (hough._data[i] > maxVal) {
+                                    maxIndex = i;
+                                    maxVal = hough._data[i];
+                                }
+                            }
+                            return maxIndex;
+                        };
+
+                        for (let i = 0; i < 4; i++) {
+                            max[i] = findMax();
+                            hough._data[max[i]] = 0;
+                        }
+
+                        const tethas = new Array(4);
+                        const rhos = new Array(4);
+
+                        for (let i = 0; i < 4; i++) {
+                            let [tetha, rho] = hough._indexToCoords(max[i]);
+                            tetha -= 90;
+                            rho -= maxDist;
+                            tethas[i] = tetha * 5;
+                            rhos[i] = rho * 5;
+                        }
+                        console.log(rhos, tethas);
                     }
                 };
 
