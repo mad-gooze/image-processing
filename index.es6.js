@@ -23,72 +23,84 @@ up_bilinear {s}               Увеличение с помощью билин�
 up_bicubic {s}                Увеличение с помощью бикубической интерполяции в s раз
 downsample {s}                Уменьшение в s раз
 metric {mse|psnr|ssim|mssim}  Вычисление метрики между двумя входными изображениями, результат выводится числом на экран
+canny {sigma} {t1} {t2}       Детектирование границ с помощью алгоритма Канни. Первый параметр — сигма для вычисления частных производных, следующие два параметра - больший и меньший пороги соответственно
 `;
 
 
 (async function () {
-    const args = yargs.argv._;
-    if (args.length < 3) {
-        console.log(help);
-    } else {
-        const img1 = args[0];
-        const img2 = args[1];
-        const command = args[2];
-
-        if (command === 'metric') {
-            const metric = args[3];
-
-            const input1 = await Image.fromFile(img1);
-            const input2 = await Image.fromFile(img2);
-
-            const metrics = {
-                mse: () => console.log(mse(input1, input2)),
-                psnr: () => console.log(psnr(input1, input2)),
-                ssim: () => console.log(ssim(input1, input2)),
-                mssim: () => console.log(mssim(input1, input2))
-            };
-            console.time('execution time');
-            metrics[metric]();
-            console.timeEnd('execution time');
+    try {
+        const args = yargs.argv._;
+        if (args.length < 3) {
+            console.log(help);
         } else {
-            const input = await Image.fromFile(img1);
+            const img1 = args[0];
+            const img2 = args[1];
+            const command = args[2];
+            console.profile(command);
 
-            const commands = {
-                invert: () => input.invert(),
-                mirror: () => input.mirror(args[3] !== 'x'),
-                rotate: () => {
-                    let angle = Number.parseFloat(args[4]);
-                    if (args[3] === 'cw') {
-                        angle *= -1;
+            if (command === 'metric') {
+                const metric = args[3];
+
+                const input1 = await Image.fromFile(img1);
+                const input2 = await Image.fromFile(img2);
+
+                const metrics = {
+                    mse: () => console.log(mse(input1, input2)),
+                    psnr: () => console.log(psnr(input1, input2)),
+                    ssim: () => console.log(ssim(input1, input2)),
+                    mssim: () => console.log(mssim(input1, input2))
+                };
+                console.time('execution time');
+                metrics[metric]();
+                console.timeEnd('execution time');
+            } else {
+                const input = await Image.fromFile(img1);
+
+                const commands = {
+                    invert: () => input.invert(),
+                    mirror: () => input.mirror(args[3] !== 'x'),
+                    rotate: () => {
+                        let angle = Number.parseFloat(args[4]);
+                        if (args[3] === 'cw') {
+                            angle *= -1;
+                        }
+                        input.rotate(angle);
+                    },
+                    prewitt: () => input
+                        .grayscale()
+                        .convolveSeparable(PREWITT[args[3] === 'x' ? 0 : 1])
+                        .normalize(),
+                    sobel: () => input
+                        .grayscale()
+                        .convolveSeparable(SOBEL[args[3] === 'x' ? 0 : 1])
+                        .normalize(),
+                    roberts: () => input
+                        .grayscale()
+                        .convolve(ROBERTS[args[3] === '1' ? 0 : 1])
+                        .normalize(),
+                    median: () => input.median(Number(args[3])),
+                    gauss: () => input.gaussian(Number.parseFloat(args[3])),
+                    gradient: () => input.gradientMagnitude(Number.parseFloat(args[3])),
+                    eqhist: () => input.equalizeHistogram(),
+                    up_bilinear: () => input.bilinearInterpolation(Number.parseFloat(args[3])),
+                    up_bicubic: () => input.bicubicInterpolation(Number.parseFloat(args[3])),
+                    downsample: () => input.bilinearInterpolation(1 / Number.parseFloat(args[3])),
+                    canny: () => {
+                        const sigma = Number.parseFloat(args[3]);
+                        const t1 = Number.parseFloat(args[4]);
+                        const t2 = Number.parseFloat(args[5]);
+                        input.canny(sigma, t1, t2);
                     }
-                    input.rotate(angle);
-                },
-                prewitt: () => input
-                    .grayscale()
-                    .convolveSeparable(PREWITT[args[3] === 'x' ? 0 : 1])
-                    .normalize(),
-                sobel: () => input
-                    .grayscale()
-                    .convolveSeparable(SOBEL[args[3] === 'x' ? 0 : 1])
-                    .normalize(),
-                roberts: () => input
-                    .grayscale()
-                    .convolve(ROBERTS[args[3] === '1' ? 0 : 1])
-                    .normalize(),
-                median: () => input.median(Number(args[3])),
-                gauss: () => input.gaussian(Number.parseFloat(args[3])),
-                gradient: () => input.gradientMagnitude(Number.parseFloat(args[3])),
-                eqhist: () => input.equalizeHistogram(),
-                up_bilinear: () => input.bilinearInterpolation(Number.parseFloat(args[3])),
-                up_bicubic: () => input.bicubicInterpolation(Number.parseFloat(args[3])),
-                downsample: () => input.bilinearInterpolation(1 / Number.parseFloat(args[3]))
-            };
+                };
 
-            console.time('execution time');
-            commands[command]();
-            console.timeEnd('execution time');
-            await input.write(img2);
+                console.time('execution time');
+                commands[command]();
+                console.timeEnd('execution time');
+                await input.write(img2);
+            }
+            console.profileEnd(command);
         }
-
+    } catch (e) {
+        console.log(e);
     }
 })();
