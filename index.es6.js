@@ -40,94 +40,53 @@ metric {mse|psnr|ssim|mssim}  Вычисление метрики между д�
 
             const input1 = await Image.fromFile(img1);
             const input2 = await Image.fromFile(img2);
-            console.time(metric);
 
-            switch(metric) {
-                case 'mse':
-                    console.log(mse(input1, input2));
-                    break;
-                case 'psnr':
-                    console.log(psnr(input1, input2));
-                    break;
-                case 'ssim':
-                    console.log(ssim(input1, input2));
-                    break;
-                case 'mssim':
-                    console.log(mssim(input1, input2));
-                    break;
-            }
-
-            console.timeEnd(metric);
-
+            const metrics = {
+                mse: () => console.log(mse(input1, input2)),
+                psnr: () => console.log(psnr(input1, input2)),
+                ssim: () => console.log(ssim(input1, input2)),
+                mssim: () => console.log(mssim(input1, input2))
+            };
+            console.time('execution time');
+            metrics[metric]();
+            console.timeEnd('execution time');
         } else {
             const input = await Image.fromFile(img1);
-            console.time(command);
 
-            switch (command) {
-                case 'invert':
-                    input.invert();
-                    break;
-
-                case 'mirror':
-                    input.mirror(args[3] !== 'x');
-                    break;
-
-                case 'rotate':
+            const commands = {
+                invert: () => input.invert(),
+                mirror: () => input.mirror(args[3] !== 'x'),
+                rotate: () => {
                     let angle = Number.parseFloat(args[4]);
                     if (args[3] === 'cw') {
                         angle *= -1;
                     }
                     input.rotate(angle);
-                    break;
+                },
+                prewitt: () => input
+                    .grayscale()
+                    .convolveSeparable(PREWITT[args[3] === 'x' ? 0 : 1])
+                    .normalize(),
+                sobel: () => input
+                    .grayscale()
+                    .convolveSeparable(SOBEL[args[3] === 'x' ? 0 : 1])
+                    .normalize(),
+                roberts: () => input
+                    .grayscale()
+                    .convolve(ROBERTS[args[3] === '1' ? 0 : 1])
+                    .normalize(),
+                median: () => input.median(Number(args[3])),
+                gauss: () => input.gaussian(Number.parseFloat(args[3])),
+                gradient: () => input.gradientMagnitude(Number.parseFloat(args[3])),
+                eqhist: () => input.equalizeHistogram(),
+                up_bilinear: () => input.bilinearInterpolation(Number.parseFloat(args[3])),
+                up_bicubic: () => input.bicubicInterpolation(Number.parseFloat(args[3])),
+                downsample: () => input.bilinearInterpolation(1 / Number.parseFloat(args[3]))
+            };
 
-                case 'prewitt':
-                    input
-                        .grayscale()
-                        .convolveSeparable(PREWITT[args[3] === 'x' ? 0 : 1])
-                        .normalize();
-                    break;
-
-                case 'sobel':
-                    input
-                        .grayscale()
-                        .convolveSeparable(SOBEL[args[3] === 'x' ? 0 : 1])
-                        .normalize();
-                    break;
-
-                case 'roberts':
-                    input
-                        .grayscale()
-                        .convolve(ROBERTS[args[3] === '1' ? 0 : 1])
-                        .normalize();
-                    break;
-
-                case 'median':
-                    input.median(Number(args[3]));
-                    break;
-
-                case 'gauss':
-                    input.gaussian(Number.parseFloat(args[3]));
-                    break;
-
-                case 'gradient':
-                    input.gradientMagnitude(Number.parseFloat(args[3]));
-                    break;
-
-                case 'eqhist':
-                    input.equalizeHistogram();
-
-                case 'up_bilinear':
-                    input.bilinearInterpolation(Number.parseFloat(args[3]));
-
-                case 'up_bicubic':
-                    input.bicubicInterpolation(Number.parseFloat(args[3]));
-
-                case 'downsample':
-                    input.bilinearInterpolation(1 / Number.parseFloat(args[3]));
-            }
-
-
-            console.timeEnd(command);
+            console.time('execution time');
+            commands[command]();
+            console.timeEnd('execution time');
             await input.write(img2);
         }
 
