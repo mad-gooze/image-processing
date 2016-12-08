@@ -1,0 +1,9 @@
+{
+  "extends": "yandex",
+  "parser": "babel-eslint",
+  "parserOptions": {
+    "ecmaFeatures": {
+      "modules": true
+    }
+  }
+}

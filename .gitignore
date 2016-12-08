@@ -49,3 +49,6 @@ jspm_packages
 .yarn-integrity
 
 .idea/
+.yarn.lock
+out.bmp
+temp/

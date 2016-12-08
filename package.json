@@ -4,20 +4,25 @@
   "description": "Image processing library in pure JavaScript",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "eslint ."
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "babel-cli": "^6.18.0",
     "babel-core": "^6.18.2",
+    "babel-eslint": "^7.1.1",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.18.0",
-    "babel-preset-es2017": "^6.16.0"
+    "babel-preset-es2017": "^6.16.0",
+    "eslint": "^3.11.1",
+    "eslint-config-yandex": "^1.0.6"
   },
   "dependencies": {
     "bmp-js": "^0.0.3",
+    "color": "^1.0.2",
     "median-quickselect": "^1.0.1",
     "mz": "^2.6.0",
+    "numeric": "^1.2.6",
     "yargs": "^6.5.0"
   }
 }
