@@ -1,7 +1,9 @@
 import Image from './lib/Image';
 import yargs from 'yargs';
-import { mse, psnr, ssim, mssim } from './lib/Metrics';
-import { PREWITT, ROBERTS, SOBEL } from './lib/filters/kernels';
+import {mse, psnr, ssim, mssim} from './lib/Metrics';
+import {PREWITT, ROBERTS, SOBEL} from './lib/filters/kernels';
+
+import {dehighlight} from './dehighlight';
 
 console.profile = console.profile || (() => {});
 console.profileEnd = console.profileEnd || (() => {});
@@ -11,7 +13,8 @@ const help = `
 
 invert                        Инверсия пикселей
 mirror {x|y}                  Отражение по горизонтали или по вертикали, в зависомсти от указанного параметра
-rotate {cw|ccw} (angle)       Поворот по или против часовой стрелки на заданное количество градусов, например: rotate cw 90
+rotate {cw|ccw} (angle)       Поворот по или против часовой стрелки на заданное количество градусов, 
+                              например: rotate cw 90
 prewitt {x|y}                 Фильтр Превитта, обнаруживающий горизонтальные или вертикальные контуры
 sobel {x|y}                   Фильтр Собеля, обнаруживающий горизонтальные или вертикальные контуры
 roberts {1|2}                 Фильтр Робертса, параметр — выбор диагонали
@@ -23,7 +26,8 @@ up_bilinear {s}               Увеличение с помощью билин�
 up_bicubic {s}                Увеличение с помощью бикубической интерполяции в s раз
 downsample {s}                Уменьшение в s раз
 metric {mse|psnr|ssim|mssim}  Вычисление метрики между двумя входными изображениями, результат выводится числом на экран
-canny {sigma} {t1} {t2}       Детектирование границ с помощью алгоритма Канни. Первый параметр — сигма для вычисления частных производных, следующие два параметра - больший и меньший пороги соответственно
+canny {sigma} {t1} {t2}       Детектирование границ с помощью алгоритма Канни. Первый параметр — сигма для вычисления 
+                              частных производных, следующие два параметра - больший и меньший пороги соответственно
 dehighlight [img2] [img3] ... Алгоритм подавления бликов
 `;
 
@@ -54,6 +58,15 @@ dehighlight [img2] [img3] ... Алгоритм подавления бликов
                 console.time('execution time');
                 metrics[metric]();
                 console.timeEnd('execution time');
+
+            } else if (command === 'dehighlight') {
+
+                const inputImages = [await Image.fromFile(img1)];
+                for (let filename of args.splice(3)) {
+                    inputImages.push(await Image.fromFile(filename));
+                }
+                await dehighlight(inputImages).write(img2);
+
             } else {
                 const input = await Image.fromFile(img1);
 
@@ -83,8 +96,8 @@ dehighlight [img2] [img3] ... Алгоритм подавления бликов
                     gauss: () => input.gaussian(Number.parseFloat(args[3])),
                     gradient: () => input.gradientMagnitude(Number.parseFloat(args[3])),
                     eqhist: () => input.equalizeHistogram(),
-                    up_bilinear: () => input.bilinearInterpolation(Number.parseFloat(args[3])),
-                    up_bicubic: () => input.bicubicInterpolation(Number.parseFloat(args[3])),
+                    'up_bilinear': () => input.bilinearInterpolation(Number.parseFloat(args[3])),
+                    'up_bicubic': () => input.bicubicInterpolation(Number.parseFloat(args[3])),
                     downsample: () => input.bilinearInterpolation(1 / Number.parseFloat(args[3])),
                     canny: () => {
                         const sigma = Number.parseFloat(args[3]);
@@ -92,42 +105,7 @@ dehighlight [img2] [img3] ... Алгоритм подавления бликов
                         const t2 = Number.parseFloat(args[5]);
                         input.canny(sigma, t1, t2);
                     },
-                    hough: () => input.hough(),
-                    dehighlight: () => {
-
-                        const hough = input.clone().hough();
-                        const maxDist = Math.hypot(input.width, input.height);
-                        const max = new Array(4);
-
-                        const findMax = () => {
-                            let maxIndex = 0;
-                            let maxVal = hough._data[maxIndex];
-                            for (let i = 1; i < hough._data.length; i++) {
-                                if (hough._data[i] > maxVal) {
-                                    maxIndex = i;
-                                    maxVal = hough._data[i];
-                                }
-                            }
-                            return maxIndex;
-                        };
-
-                        for (let i = 0; i < 4; i++) {
-                            max[i] = findMax();
-                            hough._data[max[i]] = 0;
-                        }
-
-                        const tethas = new Array(4);
-                        const rhos = new Array(4);
-
-                        for (let i = 0; i < 4; i++) {
-                            let [tetha, rho] = hough._indexToCoords(max[i]);
-                            tetha -= 90;
-                            rho -= maxDist;
-                            tethas[i] = tetha * 5;
-                            rhos[i] = rho * 5;
-                        }
-                        console.log(rhos, tethas);
-                    }
+                    hough: () => input.hough()
                 };
 
                 console.time('execution time');
