@@ -368,20 +368,19 @@ export function dehighlight(inputImages) {
             console.error(`Image #${i}: ${e.message}`);
         }
     }
-
-    const width = Math.round(widths.reduce((a, b) => a + b) / rects.length);
-    const height = Math.round(heights.reduce((a, b) => a + b) / rects.length);
-
-    for (let i = 0; i < rects.length; i++) {
-        clipped.push(cut(inputImages[indexes[i]], rects[i], width, height));
-        console.log(`Image #${indexes[i]}: clipped rect`);
-    }
-
-    // combine clipped images by taking median for each pixel
-
-    if (clipped.length < 1) {
+    if (!rects.length) {
         throw new Error('Nothing to merge, no images extracted');
     } else {
+
+        const width = Math.round(widths.reduce((a, b) => a + b) / rects.length);
+        const height = Math.round(heights.reduce((a, b) => a + b) / rects.length);
+
+        for (let i = 0; i < rects.length; i++) {
+            clipped.push(cut(inputImages[indexes[i]], rects[i], width, height));
+            console.log(`Image #${indexes[i]}: clipped rect`);
+        }
+
+        // combine clipped images by taking median for each pixel
 
         const scaleCoeff = 6;
         const clippedGrayscale = clipped.map(img => img.clone().grayscale());
